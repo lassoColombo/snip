@@ -72,7 +72,7 @@ extensions:
 ```
 
 
-### [bat](https://github.com/sharkdp/bat) is used to generate a preview of the snippet
+### [bat](https://github.com/sharkdp/bat)
 
 bat is used to provide a syntax-highlighted preview of the snippets.  
 It can be enabled in the config file as follows:
