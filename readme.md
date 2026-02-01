@@ -11,7 +11,7 @@ A nushell-native snippet manager.
 
 1. **Clone the repository** (or copy the module files) into one of your `$env.NU_LIB_DIRS`:
    ```sh
-   git clone <your-repo-url> ~/nu_libs/aiai
+   git clone git@github.com:lassoColombo/snip.git ~/nu_libs/aiai
    ```
 
 2. **Use the module** (e.g., in `~/.config/nushell/config.nu`):
