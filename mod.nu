@@ -1,6 +1,6 @@
-###########
-# helpers #
-###########
+# -----------
+#  helpers   
+# -----------
 
 def basedir [] {
   if ($env.SNIP_SNIPDIR? | is-not-empty) {
@@ -30,24 +30,68 @@ def snips [] {
 
 def fuzzyfind [] {
   $in
-  | input list --fuzzy --display path
+  | sk --format {$in.path | path split | last 2 | path join } --preview {$in.content}
   | default {
     path: ""
     content: ""
   }
 }
 
-##########
-# public #
-##########
+def snip-completer [] {
+  snips | each {|s|
+    [$s.category $s.name] | path join
+  }
+}
 
+# ----------
+#  public   
+# ----------
 # put snippet to cmdline
-export def main [] { commandline edit -r (snips | fuzzyfind | get content) }
+export def main [
+  snip?: string@snip-completer
+] { 
+  let chosen = if ($snip | is-not-empty) {
+    snips | where path =~ $snip | first
+  } else {
+    snips | fuzzyfind
+  }
+  commandline edit -r $chosen.content
+}
 # return a snippet as text
-export def text [] { (snips | fuzzyfind).content }
+export def text [
+  snip?: string@snip-completer
+] {
+  let chosen = if ($snip | is-not-empty) {
+    snips | where path =~ $snip | first
+  } else {
+    snips | fuzzyfind 
+  }
+  $chosen.content
+}
 # edit snip
-export def edit [] { ^(editor) (snips | fuzzyfind).path }
+export def edit [
+  snip?: string@snip-completer
+] {
+  let chosen = if ($snip | is-not-empty) {
+    snips | where path =~ $snip | first
+  } else {
+    snips | fuzzyfind
+  }
+  ^(editor) $chosen.path 
+}
 # manage snips
 export def manage [] { ^(editor) (snipdir) }
 # list snips
-export def ls [] { snips }
+export def ls [--categorized, --content] { 
+  let selected = [
+    name
+    (if not $content {null} else {content})
+  ] | compact
+
+  if not $categorized {return (snips | select category ...$selected)}
+  snips
+  | group-by category --to-table
+  | reduce -f {} {|group, acc|
+    $acc | merge { $group.category: ($group.items | select ...$selected) }
+  }
+}
