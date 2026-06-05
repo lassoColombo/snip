@@ -1,5 +1,7 @@
+use ../picky
+
 # -----------
-#  helpers   
+#  helpers
 # -----------
 
 def basedir [] {
@@ -30,7 +32,7 @@ def snips [] {
 
 def fuzzyfind [] {
   $in
-  | sk --format {$in.path | path split | last 2 | path join } --preview {$in.content}
+  | picky --fuzzy --display {|r| $r.path | path split | last 2 | path join}
   | default {
     path: ""
     content: ""
