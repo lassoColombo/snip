@@ -1,5 +1,3 @@
-use ../picky
-
 # -----------
 #  helpers
 # -----------
@@ -32,7 +30,7 @@ def snips [] {
 
 def fuzzyfind [] {
   $in
-  | picky --fuzzy --display {|r| $r.path | path split | last 2 | path join}
+  | input list --fuzzy --display {|r| $r.path | path split | last 2 | path join}
   | default {
     path: ""
     content: ""

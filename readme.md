@@ -2,10 +2,6 @@
 
 A snippet manager in a file.
 
-<video controls width="700">
-  <source src="docs/demo.mp4" type="video/mp4">
-</video>
-
 ## Installation
 
 1. **Clone the repository** (or copy the module files) into one of your `$env.NU_LIB_DIRS`:
