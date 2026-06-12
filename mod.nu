@@ -43,6 +43,14 @@ def snip-completer [] {
   }
 }
 
+def choose [snip?] {
+  if ($snip | is-not-empty) {
+    snips | where path =~ $snip | first
+  } else {
+    snips | fuzzyfind
+  }
+}
+
 # ----------
 #  public   
 # ----------
@@ -50,37 +58,26 @@ def snip-completer [] {
 export def main [
   snip?: string@snip-completer
 ] { 
-  let chosen = if ($snip | is-not-empty) {
-    snips | where path =~ $snip | first
-  } else {
-    snips | fuzzyfind
-  }
-  commandline edit -r $chosen.content
+  commandline edit -r (choose $snip).content
 }
+
 # return a snippet as text
 export def text [
   snip?: string@snip-completer
 ] {
-  let chosen = if ($snip | is-not-empty) {
-    snips | where path =~ $snip | first
-  } else {
-    snips | fuzzyfind 
-  }
-  $chosen.content
+  (choose $snip).content
 }
+
 # edit snip
 export def edit [
   snip?: string@snip-completer
 ] {
-  let chosen = if ($snip | is-not-empty) {
-    snips | where path =~ $snip | first
-  } else {
-    snips | fuzzyfind
-  }
-  ^(editor) $chosen.path 
+  ^(editor) (choose $snip).path 
 }
+
 # manage snips
 export def manage [] { ^(editor) (snipdir) }
+
 # list snips
 export def ls [--categorized, --content] { 
   let selected = [
