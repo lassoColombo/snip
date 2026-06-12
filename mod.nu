@@ -14,7 +14,7 @@ def basedir [] {
 
 def snipdir [] { [(basedir) snippets] | path join }
 
-def editor [] { $nu.editor? | default $env.EDITOR | default vim }
+def editor [] { $nu.editor? | default $env.EDITOR? | default vim }
 
 def snips [] {
   glob --no-dir $"(snipdir)/**/*" | each {|file|
