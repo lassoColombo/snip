@@ -109,7 +109,7 @@ export def ls [
 ]: nothing -> table {
   let selected = [
     name
-    (if not $content {null} else {content})
+    (if not $content {null} else {'content'})
   ] | compact
 
   snips | select ...$selected
