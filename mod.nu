@@ -63,7 +63,7 @@ def snip-completer [] { snips | get name }
 @example "fuzzy-pick a snippet and paste it" { snip }
 @example "match by path fragment" { snip aws/s3-list }
 @example "match anywhere in the relative path" { snip jwt }
-export def main [
+export def run [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ] {
   commandline edit -r (choose $snip).content
