@@ -44,9 +44,10 @@ def fuzzyfind [] {
 
 
 def choose [snip?] {
-  if ($snip | is-empty) {snips | fuzzyfind} else {
-    (snips | where path =~ $snip).0
-  }
+  if ($snip | is-empty) {return (snips | fuzzyfind)} 
+  let matches = (snips | where path =~ $snip)
+  if ($matches | length) == 1 {return $matches.0}
+  $matches | fuzzyfind
 }
 
 def snip-completer [] { snips | get name }
@@ -63,7 +64,7 @@ def snip-completer [] { snips | get name }
 @example "fuzzy-pick a snippet and paste it" { snip }
 @example "match by path fragment" { snip aws/s3-list }
 @example "match anywhere in the relative path" { snip jwt }
-export def run [
+export def execute [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ] {
   commandline edit -r (choose $snip).content
