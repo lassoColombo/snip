@@ -33,9 +33,36 @@ def snips [] {
   }
 }
 
+def pick [opts: record] {
+  let items = $in
+  let custom = $env.snip_config?.picker?
+  if ($custom != null) { return ($items | do $custom $opts) }
+  # `default` would EVALUATE a closure handed to it, so spell the fallback out.
+  let display = if ($opts.display? == null) { {|| $in | to text } } else { $opts.display }
+  $items | input list --fuzzy --display $display ($opts.prompt? | default "")
+}
+
+def render [text: string, name: string] {
+  let custom = $env.snip_config?.render?
+  if ($custom == null) { return $text }
+  $text | do $custom {name: $name}
+}
+
+const PREVIEW = "down:60%:wrap"
+const MIN_ROWS = 16
+
+def preview-window [] {
+  if (term size).rows < $MIN_ROWS { "down:0" } else { $PREVIEW }
+}
+
 def fuzzyfind [] {
   $in
-  | input list --fuzzy --display {|r| $r.name}
+  | pick {
+      prompt: "snippet"
+      display: {|| $in.name }
+      preview: {|| let s = $in; render $s.content $s.name }
+      window: (preview-window)
+    }
   | default {
     path: ""
     content: ""

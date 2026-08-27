@@ -28,6 +28,48 @@ $env.SNIP_SNIPDIR
 }
 ```
 
+### Picker
+
+Choosing a snippet uses Nushell's built-in `input list` by default — no plugin
+required. Set `$env.snip_config.picker` to a closure to swap the engine; it
+receives the snippets as pipeline input and one options record
+`{prompt, display, preview, window}`, where `display` and `preview` are closures
+over a single snippet (`$in`, no parameter):
+
+```nu
+$env.snip_config = {
+  picker: {|opts|
+    $in | sk --format $opts.display --preview $opts.preview --preview-window $opts.window --prompt $opts.prompt
+  }
+}
+```
+
+A picker with a preview pane (like [skim](https://github.com/lotabout/skim) above,
+via `nu_plugin_skim`) can then show a snippet's body before you pick it. The
+built-in picker has no preview pane and simply ignores `preview` and `window`.
+
+`window` is a preview-window hint in skim's syntax: the pane sits UNDER the list
+and gets the bigger share of the height, so a snippet is shown at the full width
+of the terminal rather than squeezed into a column beside its own name. On a
+terminal too short for both it is dropped (`down:0`) and the list takes the whole
+pane.
+
+### Syntax highlighting
+
+Snippet bodies are shown as plain text by default. Set `$env.snip_config.render`
+to a closure to style them; it receives the text as pipeline input and a record
+`{lang, name}` — `name` being the snippet's path, for guessing the syntax:
+
+```nu
+$env.snip_config = {
+  render: {|opts|
+    $in | ^bat --color=always --paging=never --style=plain --file-name $opts.name
+  }
+}
+```
+
+Both hooks are independent: configure one, the other, or neither.
+
 ## Functions
 
 ##### snip
