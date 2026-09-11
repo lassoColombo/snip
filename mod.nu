@@ -1,6 +1,6 @@
 # Tiny snippet manager.
 #
-# A snippet is just a file under the snip directory. The directory layout is
+# A snippet is a file under the snip directory. The directory layout is
 # free — files can sit at the root or nested at any depth. Each snippet is
 # identified by its path relative to the snip directory.
 
@@ -37,7 +37,6 @@ def pick [opts: record] {
   let items = $in
   let custom = $env.snip_config?.picker?
   if ($custom != null) { return ($items | do $custom $opts) }
-  # `default` would EVALUATE a closure handed to it, so spell the fallback out.
   let display = if ($opts.display? == null) { {|| $in | to text } } else { $opts.display }
   $items | input list --fuzzy --display $display ($opts.prompt? | default "")
 }
@@ -48,38 +47,20 @@ def render [text: string, name: string] {
   $text | do $custom {name: $name}
 }
 
-# A snippet's name, clamped to its last few components. A path is worth more
-# from its tail than its head: `aws/s3-list-in-bucket.nu` says what
-# `work/scratch/aws/s3-list-in-bucket.nu` says, and the shorter row survives a
-# picker that only gets half the screen. A shorter name passes through
-# untouched.
-#
-# This is the row, and a picker matches on the row: a component dropped here is
-# a component you can no longer type at. Four is chosen to be more depth than
-# the tree is ever likely to have, so that stays theoretical.
-const NAME_PARTS = 4
-
-def label [name: string]: nothing -> string {
-  $name | path split | last $NAME_PARTS | path join
-}
-
 def fuzzyfind [] {
   $in
   | pick {
       prompt: "snippet"
-      display: {|| label $in.name }
+      display: {|| $in.name }
       preview: {|| let s = $in; render $s.content $s.name }
     }
-  | default {
-    path: ""
-    content: ""
-  }
+  | default { path: "" content: "" }
 }
 
 
 def choose [snip?] {
   if ($snip | is-empty) {return (snips | fuzzyfind)} 
-  let matches = (snips | where path =~ $snip)
+  let matches = (snips | where name =~ $snip)
   if ($matches | length) == 1 {return $matches.0}
   $matches | fuzzyfind
 }
@@ -91,13 +72,6 @@ def snip-completer [] { snips | get name }
 # ----------
 
 # Insert a snippet's content into the current commandline.
-#
-# With no argument, opens the fuzzy picker. With an argument, matches it as a
-# regex against snippet paths and uses the first hit.
-@search-terms snippet paste commandline fuzzy
-@example "fuzzy-pick a snippet and paste it" { snip }
-@example "match by path fragment" { snip aws/s3-list }
-@example "match anywhere in the relative path" { snip jwt }
 export def execute [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ] {
@@ -105,10 +79,6 @@ export def execute [
 }
 
 # Print a snippet's content to stdout.
-@search-terms snippet print show cat
-@example "print to stdout" { snip text decode-jwt }
-@example "fuzzy-pick, then print" { snip text }
-@example "pipe into another command" { snip text aws/s3-list | clip copy }
 export def text [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ]: nothing -> string {
@@ -116,29 +86,16 @@ export def text [
 }
 
 # Open a snippet in $EDITOR.
-@search-terms snippet edit open
-@example "edit a specific snippet" { snip edit aws/s3-list }
-@example "fuzzy-pick, then edit" { snip edit }
 export def edit [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ] {
   ^(editor) (choose $snip).path
 }
 
-# Open the snip directory in $EDITOR, for bulk management
-# (creating, renaming, deleting snippets).
-@search-terms snippet directory manage browse
-@example "open the snip dir for bulk edits" { snip manage }
+# Open the snip directory in $EDITOR.
 export def manage [] { ^(editor) (snipdir) }
 
 # List every snippet.
-#
-# By default returns a table of `{name}`. With `--content`, includes the file
-# contents alongside the name.
-@search-terms snippet list ls table
-@example "list all snippets" { snip ls }
-@example "list with contents inline" { snip ls --content }
-@example "filter by path fragment" { snip ls | where name =~ aws }
 export def ls [
   --content  # include each snippet's content in the output
 ]: nothing -> table {
