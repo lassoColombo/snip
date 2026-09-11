@@ -33,37 +33,33 @@ $env.SNIP_SNIPDIR
 Choosing a snippet uses Nushell's built-in `input list` by default — no plugin
 required. Set `$env.snip_config.picker` to a closure to swap the engine; it
 receives the snippets as pipeline input and one options record
-`{prompt, display, preview, window}`, where `display` and `preview` are closures
+`{prompt, display, preview}`, where `display` and `preview` are closures
 over a single snippet (`$in`, no parameter):
 
 ```nu
 $env.snip_config = {
   picker: {|opts|
-    $in | sk --format $opts.display --preview $opts.preview --preview-window $opts.window --prompt $opts.prompt
+    $in | sk --format $opts.display --preview $opts.preview --prompt $opts.prompt
   }
 }
 ```
 
 A picker with a preview pane (like [skim](https://github.com/lotabout/skim) above,
 via `nu_plugin_skim`) can then show a snippet's body before you pick it. The
-built-in picker has no preview pane and simply ignores `preview` and `window`.
-
-`window` is a preview-window hint in skim's syntax. A snippet is code — many
-short lines — so what the pane runs out of is ROWS. On a terminal at least 120
-columns wide it therefore sits BESIDE the list (`right:60%:wrap`) and gets the
-full height of the screen; on a narrower one it goes back underneath
-(`down:60%:wrap`), where the columns are. On a terminal too short for both it is
-dropped (`down:0`) and the list takes the whole pane.
+built-in picker has no preview pane and simply ignores `preview`. Layout —
+where the preview pane sits, how it wraps, what keys scroll it — is the
+picker's business, not snip's, so it belongs in your closure.
 
 Rows are clamped to their last 4 path components, so a deeply nested snippet
-still fits the narrower half of the screen. Note that skim matches on the row, so
-a component dropped there is a component you can no longer type at.
+still fits a picker that only gets half the screen. Note that a picker matches
+on the row, so a component dropped there is a component you can no longer type
+at.
 
 ### Syntax highlighting
 
 Snippet bodies are shown as plain text by default. Set `$env.snip_config.render`
 to a closure to style them; it receives the text as pipeline input and a record
-`{lang, name}` — `name` being the snippet's path, for guessing the syntax:
+`{name}` — the snippet's path, for guessing the syntax:
 
 ```nu
 $env.snip_config = {

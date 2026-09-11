@@ -48,45 +48,19 @@ def render [text: string, name: string] {
   $text | do $custom {name: $name}
 }
 
-# A snippet's name, clamped to its last few components. Once the preview sits
-# BESIDE the list, the list is the narrower half, and a path is worth more from
-# its tail than its head: `aws/s3-list-in-bucket.nu` says what
-# `work/scratch/aws/s3-list-in-bucket.nu` says. A shorter name passes through
-# untouched, so snippets one directory deep — which is all of them, so far —
-# read exactly as they did.
+# A snippet's name, clamped to its last few components. A path is worth more
+# from its tail than its head: `aws/s3-list-in-bucket.nu` says what
+# `work/scratch/aws/s3-list-in-bucket.nu` says, and the shorter row survives a
+# picker that only gets half the screen. A shorter name passes through
+# untouched.
 #
-# This is the row, and skim matches on the row: a component dropped here is a
-# component you can no longer type at. Four is chosen to be more depth than the
-# tree is ever likely to have, so that stays theoretical.
+# This is the row, and a picker matches on the row: a component dropped here is
+# a component you can no longer type at. Four is chosen to be more depth than
+# the tree is ever likely to have, so that stays theoretical.
 const NAME_PARTS = 4
 
 def label [name: string]: nothing -> string {
   $name | path split | last $NAME_PARTS | path join
-}
-
-# Where the preview pane goes. A snippet is CODE — many short lines — so ROWS are
-# what it runs out of. Beside the list it gets the FULL height of the terminal
-# where underneath it got three fifths of it, and half of a wide terminal is
-# still wider than nine snippet lines in ten. A narrow terminal puts it back
-# under the list, where the columns are.
-#
-# `:wrap` on both, because bat is asked NOT to wrap (see the readme) precisely so
-# that the pane can, on word boundaries rather than mid-word.
-#
-# Under MIN_ROWS there is no room for both, so the preview goes and the list
-# takes the whole pane: skim reads a zero-height pane as "no preview at all".
-const MIN_ROWS = 16
-const WIDE_COLS = 120
-const SIDE = 60   # % of a wide terminal the preview takes on the right
-const UNDER = 60  # % of a narrow one it takes underneath
-
-def preview-window [] {
-  let t = (term size)
-  if $t.rows < $MIN_ROWS { "down:0" } else if $t.columns >= $WIDE_COLS {
-    $"right:($SIDE)%:wrap"
-  } else {
-    $"down:($UNDER)%:wrap"
-  }
 }
 
 def fuzzyfind [] {
@@ -95,7 +69,6 @@ def fuzzyfind [] {
       prompt: "snippet"
       display: {|| label $in.name }
       preview: {|| let s = $in; render $s.content $s.name }
-      window: (preview-window)
     }
   | default {
     path: ""
