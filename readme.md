@@ -48,11 +48,16 @@ A picker with a preview pane (like [skim](https://github.com/lotabout/skim) abov
 via `nu_plugin_skim`) can then show a snippet's body before you pick it. The
 built-in picker has no preview pane and simply ignores `preview` and `window`.
 
-`window` is a preview-window hint in skim's syntax: the pane sits UNDER the list
-and gets the bigger share of the height, so a snippet is shown at the full width
-of the terminal rather than squeezed into a column beside its own name. On a
-terminal too short for both it is dropped (`down:0`) and the list takes the whole
-pane.
+`window` is a preview-window hint in skim's syntax. A snippet is code — many
+short lines — so what the pane runs out of is ROWS. On a terminal at least 120
+columns wide it therefore sits BESIDE the list (`right:60%:wrap`) and gets the
+full height of the screen; on a narrower one it goes back underneath
+(`down:60%:wrap`), where the columns are. On a terminal too short for both it is
+dropped (`down:0`) and the list takes the whole pane.
+
+Rows are clamped to their last 4 path components, so a deeply nested snippet
+still fits the narrower half of the screen. Note that skim matches on the row, so
+a component dropped there is a component you can no longer type at.
 
 ### Syntax highlighting
 
