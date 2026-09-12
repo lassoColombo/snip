@@ -20,7 +20,7 @@ def basedir [] {
 
 def snipdir [] { [(basedir) snippets] | path join }
 
-def editor [] { $nu.editor? | default $env.EDITOR? | default vim }
+def editor [] { $env.config?.buffer_editor? | default $env.EDITOR? | default vim }
 
 def snips [] {
   let root = (snipdir)

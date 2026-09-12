@@ -1,12 +1,17 @@
 # Snip
 
-A snippet manager in a file.
+Manage your snippets with your preferred editor  
+select them with your picker of choice  
+and track them with git as part of your configuration  
+in less than 100 lines of nu.
 
-# Table of contents
-- [Snip](#snip)
+---
+  - [What snip is](#what-snip-is)
+    - [Manage your snippets in your preferred editor](#manage-your-snippets-in-your-preferred-editor)
+      - [Configure the editor](#configure-the-editor)
+    - [Access your snippets with an ergonomic cli](#access-your-snippets-with-an-ergonomic-cli)
+      - [Configure the picker](#configure-the-picker)
   - [Installation](#installation)
-  - [Configuration](#configuration)
-    - [Picker](#picker)
   - [Commands](#commands)
     - [`snip edit`](#`snip-edit`)
     - [`snip execute`](#`snip-execute`)
@@ -14,29 +19,62 @@ A snippet manager in a file.
     - [`snip manage`](#`snip-manage`)
     - [`snip text`](#`snip-text`)
 
-## Installation
 
-1. **Clone the repository** (or copy the module files) into one of your `$env.NU_LIB_DIRS`:
-   ```sh
-   git clone git@github.com:lassoColombo/snip.git ~/nu_libs/aiai
-   ```
 
-2. **Use the module** (e.g., in `~/.config/nushell/config.nu`):
+## What snip is
 
-   ```nu
-   use snip
-   ```
+Snip is a little but powerful snippet manager.  
 
-## Configuration
+- [Snip stores your snippets as regular files. it lets you easily track them with git and manage them with your editor of choice](#manage-your-snippets-in-your-preferred-editor)
+- [Snip let you access your snippets with an ergonomic cli, and select them with a picker](#access-your-snippets-with-an-ergonomic-cli)
 
-Snippets live by default under `~/.config/snip`. You can override the locatioin by setting either the `SNIP_SNIPDIR` or the `XDG_CONFIG_HOME` env variable.
+### Manage your snippets in your preferred editor
+Snip stores your snippets as regular files on disk, and lets you manage them with your default editor - or any editor of your choice.  
+Snippets live by default under `~/.config/snip`. Everything under that directory is a snippet.  
+The organization of the snip directory is free: you can group and organize your snippets as you please.
 
-Aside from the default location of the snippets, the picker is the one thing snip lets you swap.
+```nu
+snip manage # open the snip directory in your configured editor
+snip edit <snippet> # open a snippet in your configured editor
+snip ls # list your snippets
+```
 
-### Picker
+The snip directory follows the xdg directory specification: you can override it by either setting `XDG_CONFIG_HOME` or `SNIP_SNIPDIR`.  
 
-Choosing a snippet uses Nushell's built-in `input list` by default — no plugin
-required. Set `$env.snip_config.picker` to swap the engine.
+#### Configure the editor
+
+Snip uses by default the editor you configured in `$env.config.buffer_editor` or `$env.EDITOR`.  
+If you'd rather use another editor to manage your snippets you can set `$env.snip_config.editor` as follows:
+```nu
+$env.snip_config = { editor: nvim }
+$env.snip_config = { editor: ["emacsclient", "-s", "light", "-t"] } 
+```
+
+---
+
+### Access your snippets with an ergonomic cli
+Snip exposes an ergonomic cli that lets you quickly find a snippet.
+The cli is based on the following principles:
+- all arguments must provide autocompletion
+- if a mandatory argument is not passed the user is required to select its value in the picker
+
+So
+```nu
+# You can run commands providing all the necessary arguments, and have autocompletion
+snip execute nu/ls.nu 
+
+# You can run commands providing no argument. You will be prompted to select one in the picker
+snip execute
+
+# You can even run commands providing ambiguous arguments. 
+# If your search matches more than a snippet, you will be prompted to select one in the picker
+snip execute ls
+```
+
+#### Configure the picker
+
+Choosing a snippet uses Nushell's built-in `input list` by default.  
+Set `$env.snip_config.picker` to swap the engine.
 
 A picker is **a closure from a list of snippets to one snippet**:
 
@@ -49,7 +87,7 @@ list<record<name: string, content: string, path: string>> -> record | null
 `snip ls` returns exactly those records, so a picker is a command you can run by hand against real data:
 
 ```nu
-def my-picker [] {}
+def my-picker [] {$in | first} # a picker that simply returns the first item
 snip ls | my-picker
 ```
 
@@ -66,6 +104,19 @@ $env.snip_config = {picker: {||
         --prompt "snippet "
   )
 }}
+```
+
+## Installation
+
+```nu
+# clone into one of your NU_LIB_DIRS
+let dest = [($env.NU_LIB_DIRS | first) semver] | path join
+git clone git@github.com:lassoColombo/snip.git $dest
+
+# use the module
+use snip
+snip ls
+snip manage
 ```
 
 <!-- commands-section:start -->
@@ -136,7 +187,7 @@ List every snippet: what it is called, what is in it, and where it lives.
 
 **Signature:** `nothing -> table<name: string, content: string, path: string>`
 
-No flags, and all three columns always — this is exactly what a picker is handed
+No flags, and all three columns always - this is exactly what a picker is handed
 (see [Picker](#picker)), so a picker can be built against `snip ls` at the
 prompt. Select what you want when you want less.
 
