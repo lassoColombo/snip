@@ -37,14 +37,7 @@ def pick [opts: record] {
   let items = $in
   let custom = $env.snip_config?.picker?
   if ($custom != null) { return ($items | do $custom $opts) }
-  let display = if ($opts.display? == null) { {|| $in | to text } } else { $opts.display }
-  $items | input list --fuzzy --display $display ($opts.prompt? | default "")
-}
-
-def render [text: string, name: string] {
-  let custom = $env.snip_config?.render?
-  if ($custom == null) { return $text }
-  $text | do $custom {name: $name}
+  $items | input list --fuzzy --display $opts.display $opts.prompt
 }
 
 def fuzzyfind [] {
@@ -52,7 +45,7 @@ def fuzzyfind [] {
   | pick {
       prompt: "snippet"
       display: {|| $in.name }
-      preview: {|| let s = $in; render $s.content $s.name }
+      preview: {|| $in.content }
     }
   | default { path: "" content: "" }
 }
