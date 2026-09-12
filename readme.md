@@ -36,40 +36,52 @@ Aside from the default location of the snippets, the picker is the one thing sni
 ### Picker
 
 Choosing a snippet uses Nushell's built-in `input list` by default — no plugin
-required. Set `$env.snip_config.picker` to a closure to swap the engine; it
-receives the snippets as pipeline input and one options record
-`{prompt, display, preview}`, where `display` and `preview` are closures over a
-single snippet (`$in`, no parameter):
+required. Set `$env.snip_config.picker` to swap the engine.
 
-```nu
-$env.snip_config = {
-  picker: {|opts|
-    $in | sk --format $opts.display --preview $opts.preview --prompt $opts.prompt
-  }
-}
+A picker is **a closure from snippets to one snippet**:
+
+```
+list<record<name: string, content: string, path: string>> -> record | null
 ```
 
-A picker with a preview pane can then show a snippet's body before you pick it;
-the built-in picker has no preview pane and simply ignores `preview`. Layout —
-where the pane sits, how it wraps, what keys scroll it — is the picker's
-business, not snip's.
+That shape is the whole contract. Snip says nothing about rows, panes, keys or
+colours, because everything a picker could want to show is already on the record
+it was handed: `content` is the body, `name` is the relative path — which
+doubles as the syntax hint for a highlighter — and `path` is the file itself.
 
-So is **styling**: `preview` yields the snippet's text plain, and snip says
-nothing more about it. Some engines highlight on their own, some need a wrapper,
-some have no preview pane at all — that is a decision only your closure can
-make. To pipe the body through something like [bat](https://github.com/sharkdp/bat),
-replace `preview` with your own, using the snippet's `name` as the syntax hint:
+`snip ls` returns exactly those records, so a picker is a command you can run by
+hand against real data:
 
 ```nu
-$env.snip_config = {
-  picker: {|opts|
-    let preview = {||
-      let snip = $in
-      $snip | do $opts.preview | ^bat --color=always --paging=never --style=plain --file-name $snip.name
-    }
-    $in | sk --format $opts.display --preview $preview --prompt $opts.prompt
+snip ls | do $env.snip_config.picker
+```
+
+Write it, run that, watch it work. There is no protocol to obey — if it takes
+snippets and gives one back, it is a picker.
+
+Here is one using [skim](https://github.com/lotabout/skim)'s Nushell plugin,
+with the body highlighted by [bat](https://github.com/sharkdp/bat) and the syntax
+guessed from the snippet's name:
+
+```nu
+$env.snip_config = {picker: {||
+  let preview = {||
+    let s = $in
+    $s.content | ^bat --color=always --paging=never --style=plain --file-name $s.name
   }
-}
+  $in | sk --format {|| $in.name } --preview $preview --preview-window "down:75%:wrap" --prompt "snippet "
+}}
+```
+
+Because a picker is just a function over snippets, it composes — and it does not
+have to be interactive at all:
+
+```nu
+# narrow first, then choose
+$env.snip_config = {picker: {|| $in | where name =~ '^git/' | my-picker }}
+
+# never prompt: always the most recently edited snippet
+$env.snip_config = {picker: {|| $in | sort-by {|s| ls $s.path | get 0.modified } | last }}
 ```
 
 <!-- commands-section:start -->
@@ -79,7 +91,7 @@ $env.snip_config = {
 | ------------------------------- | ------------------- | -------------------------------------------------------- |
 | [`snip edit`](#snip-edit)       | `any -> any`        | Open a snippet in $EDITOR.                               |
 | [`snip execute`](#snip-execute) | `any -> any`        | Insert a snippet's content into the current commandline. |
-| [`snip ls`](#snip-ls)           | `nothing -> table`  | List every snippet.                                      |
+| [`snip ls`](#snip-ls)           | `nothing -> table`  | List every snippet: name, content and path.              |
 | [`snip manage`](#snip-manage)   | `any -> any`        | Open the snip directory in $EDITOR.                      |
 | [`snip text`](#snip-text)       | `nothing -> string` | Print a snippet's content to stdout.                     |
 
@@ -136,29 +148,30 @@ snip jwt
 
 ### `snip ls`
 
-List every snippet.
+List every snippet: what it is called, what is in it, and where it lives.
 
-**Signature:** `nothing -> table`
+**Signature:** `nothing -> table<name: string, content: string, path: string>`
 
-**Flags**
-
-| Flag        | Type     | Description                                  |
-| ----------- | -------- | -------------------------------------------- |
-| `--content` | `switch` | include each snippet's content in the output |
+No flags, and all three columns always — this is exactly what a picker is handed
+(see [Picker](#picker)), so a picker can be built against `snip ls` at the
+prompt. Select what you want when you want less.
 
 **Search terms:** `snippet`, `list`, `ls`, `table`
 
 **Examples**
 
 ```nu
-# list all snippets
+# every snippet, in full
 snip ls
 
-# list with contents inline
-snip ls --content
+# just the names
+snip ls | get name
 
 # filter by path fragment
 snip ls | where name =~ aws
+
+# run your configured picker by hand
+snip ls | do $env.snip_config.picker
 ```
 
 ### `snip manage`

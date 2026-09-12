@@ -33,21 +33,23 @@ def snips [] {
   }
 }
 
-def pick [opts: record] {
+# A picker is a closure from snippets to one snippet: the records `snips` builds
+# in, one of them out, or null when nothing was chosen. That shape IS the whole
+# contract. snip says nothing about rows, panes, keys or colours — everything a
+# picker could want to show is already on the record it was handed, and `snip ls`
+# hands you the same records to build one against.
+#
+# With nothing configured this is Nushell's built-in `input list`, which is why
+# snip needs no plugin.
+def pick []: list<any> -> any {
   let items = $in
   let custom = $env.snip_config?.picker?
-  if ($custom != null) { return ($items | do $custom $opts) }
-  $items | input list --fuzzy --display $opts.display $opts.prompt
+  if ($custom != null) { return ($items | do $custom) }
+  $items | input list --fuzzy --display {|| $in.name } "snippet"
 }
 
 def fuzzyfind [] {
-  $in
-  | pick {
-      prompt: "snippet"
-      display: {|| $in.name }
-      preview: {|| $in.content }
-    }
-  | default { path: "" content: "" }
+  $in | pick | default { path: "" content: "" }
 }
 
 
@@ -88,14 +90,16 @@ export def edit [
 # Open the snip directory in $EDITOR.
 export def manage [] { ^(editor) (snipdir) }
 
-# List every snippet.
-export def ls [
-  --content  # include each snippet's content in the output
-]: nothing -> table {
-  let selected = [
-    name
-    (if not $content {null} else {'content'})
-  ] | compact
-
-  snips | select ...$selected
+# List every snippet: what it is called, what is in it, and where it lives.
+#
+# No flags, and all three columns always: this is EXACTLY what a picker is handed
+# (see the Picker section of the readme), so a picker is a command you can run by
+# hand against real data —
+#
+#     snip ls | do $env.snip_config.picker
+#
+# — rather than a protocol you have to read about. `snip ls | get name` is the
+# bare list of names when that is all you wanted.
+export def ls []: nothing -> table<name: string, content: string, path: string> {
+  snips
 }
