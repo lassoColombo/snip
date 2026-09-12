@@ -1,9 +1,10 @@
 # Snip
 
-Manage your snippets with your preferred editor  
-select them with your picker of choice  
-and track them with git as part of your configuration  
-in less than 100 lines of nu.
+Snip is a little but powerful snippet manager in less than 100 lines of nu.
+
+- Manage your snippets with your preferred editor  
+- Select them with your picker of choice  
+- Track them with git as part of your configuration  
 
 ---
   - [What snip is](#what-snip-is)
@@ -25,8 +26,11 @@ in less than 100 lines of nu.
 
 Snip is a little but powerful snippet manager.  
 
-- [Snip stores your snippets as regular files. it lets you easily track them with git and manage them with your editor of choice](#manage-your-snippets-in-your-preferred-editor)
-- [Snip let you access your snippets with an ergonomic cli, and select them with a picker](#access-your-snippets-with-an-ergonomic-cli)
+Snip stores your snippets as regular files.  
+It lets you easily track them with git and manage them with your editor of choice.
+
+Snip let you access your snippets with an ergonomic cli.  
+You can run your snippets with autocompletion or by selecting them in your favourite picker.
 
 ### Manage your snippets in your preferred editor
 Snip stores your snippets as regular files on disk, and lets you manage them with your default editor - or any editor of your choice.  
@@ -43,12 +47,13 @@ The snip directory follows the xdg directory specification: you can override it 
 
 #### Configure the editor
 
-Snip uses by default the editor you configured in `$env.config.buffer_editor` or `$env.EDITOR`.  
+Snip uses by default the editor you configured in `$env.config.buffer_editor` or `$env.EDITOR`, falling back to `vim`.  
 If you'd rather use another editor to manage your snippets you can set `$env.snip_config.editor` as follows:
 ```nu
 $env.snip_config = { editor: nvim }
 $env.snip_config = { editor: ["emacsclient", "-s", "light", "-t"] } 
 ```
+A bare string is just the program; a list is the program followed by its arguments - the snippet (or the snip directory) is appended last.
 
 ---
 
@@ -124,15 +129,15 @@ snip manage
 
 | Command                         | Signature           | Description                                              |
 | ------------------------------- | ------------------- | -------------------------------------------------------- |
-| [`snip edit`](#snip-edit)       | `any -> any`        | Open a snippet in $EDITOR.                               |
+| [`snip edit`](#snip-edit)       | `any -> any`        | Open a snippet in the configured editor.                 |
 | [`snip execute`](#snip-execute) | `any -> any`        | Insert a snippet's content into the current commandline. |
 | [`snip ls`](#snip-ls)           | `nothing -> table`  | List every snippet: name, content and path.              |
-| [`snip manage`](#snip-manage)   | `any -> any`        | Open the snip directory in $EDITOR.                      |
+| [`snip manage`](#snip-manage)   | `any -> any`        | Open the snip directory in the configured editor.        |
 | [`snip text`](#snip-text)       | `nothing -> string` | Print a snippet's content to stdout.                     |
 
 ### `snip edit`
 
-Open a snippet in $EDITOR.
+Open a snippet in the configured editor.
 
 **Signature:** `any -> any`
 
@@ -211,7 +216,7 @@ snip ls | do $env.snip_config.picker
 
 ### `snip manage`
 
-Open the snip directory in $EDITOR.
+Open the snip directory in the configured editor.
 
 **Signature:** `any -> any`
 
