@@ -91,15 +91,4 @@ export def edit [
 export def manage [] { ^(editor) (snipdir) }
 
 # List every snippet: what it is called, what is in it, and where it lives.
-#
-# No flags, and all three columns always: this is EXACTLY what a picker is handed
-# (see the Picker section of the readme), so a picker is a command you can run by
-# hand against real data —
-#
-#     snip ls | do $env.snip_config.picker
-#
-# — rather than a protocol you have to read about. `snip ls | get name` is the
-# bare list of names when that is all you wanted.
-export def ls []: nothing -> table<name: string, content: string, path: string> {
-  snips
-}
+export def ls []: nothing -> table<name: string, content: string, path: string> { snips }
