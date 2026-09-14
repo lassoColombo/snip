@@ -1,17 +1,13 @@
-# Snip
-
-
 <div align="center">
   <h1>snip</h1>
-  <p><strong>Little and powerful snippet manager</strong></p>
+  <!-- <p><strong>Little and powerful snippet manager</strong></p> -->
+  <p>
+    Manage your snippets with your preferred editor<br>
+    Select them with your picker of choice<br>
+    Track them with git as part of your configuration
+  </p>
   <a href="https://asciinema.org/a/JFWJVaytpLcbtjZC"><img src="https://asciinema.org/a/JFWJVaytpLcbtjZC.svg" alt="asciicast" width="600"></a>
 </div>
-
-- Manage your snippets with your preferred editor  
-- Select them with your picker of choice  
-- Track them with git or jj as part of your configuration  
-
----
 
 - [Snip](#snip)
   - [What snip is](#what-snip-is)
@@ -19,7 +15,7 @@
       - [Configure the editor](#configure-the-editor)
     - [Access your snippets with an ergonomic cli](#access-your-snippets-with-an-ergonomic-cli)
       - [Configure the picker](#configure-the-picker)
-    - [Track your snippets with git or jj](#track-your-snippets-with-git-or-jj)
+    - [Track your snippets with git](#track-your-snippets-with-git)
       - [Configure the message](#configure-the-message)
   - [Installation](#installation)
   - [Commands](#commands)
@@ -34,11 +30,13 @@
 
 Snip is a little and powerful snippet manager.  
 
-Snip stores your snippets as regular files.  
-It lets you easily track them with git and manage them with your editor of choice.
+> Snip stores your snippets as regular files.  
+ It lets you easily track them with git and manage them with your editor of choice.
 
-Snip let you access your snippets with an ergonomic cli.  
-You can run your snippets with autocompletion or by selecting them in your favourite picker.
+> Snip let you access your snippets with an ergonomic cli.  
+ You can run your snippets with autocompletion or by selecting them in your favourite picker.
+
+---
 
 ### Manage your snippets in your preferred editor
 Snip stores your snippets as regular files on disk, and lets you manage them with your default editor - or any editor of your choice.  
@@ -120,29 +118,26 @@ $env.snip_config = {picker: {||
 
 ---
 
-### Track your snippets with git or jj
+### Track your snippets with git
 
 Editing a snippet is a change worth keeping.
 Snip keeps it for you: when your editor exits, `snip edit` and `snip manage` commit whatever changed - one commit per invocation.
 
-Nothing happens until you name a tracker:
+Nothing happens until you ask for it:
 
 ```nu
-$env.snip_config = { auto_track: { tracker: git } }
-$env.snip_config = { auto_track: { tracker: jj } }
+$env.snip_config = { auto_track: true }
 ```
 
 Or keep it in your hands. `snip track` records the snip directory on demand, with or without auto tracking configured:
 
 ```nu
-snip track     # the configured tracker, git if you configured none
-snip track jj  # this one, this time
+snip track
 ```
 
 Snip finds the repository by walking up from the snip directory, so snippets kept inside your dotfiles need no setup at all.
 
-It commits the snip directory and nothing else.
-With `git` it stages and commits those paths alone, with `jj` it commits the changes to those paths and leaves the rest in your working copy.
+It stages and commits the snip directory alone.
 Whatever else you had in flight stays where you left it.
 
 It stays quiet when there is nothing to do: no change, no commit.
@@ -153,10 +148,10 @@ An editor that returns immediately is committed before you have typed anything -
 
 #### Configure the message
 
-Commits are called `update snippets`. Set `$env.snip_config.auto_track.message` to call them something else:
+Commits are called `update snippets`. Set `$env.snip_config.commit_message` to call them something else:
 
 ```nu
-$env.snip_config = { auto_track: { tracker: jj, message: "chore(snippets): update" } }
+$env.snip_config = { commit_message: "chore(snippets): update" }
 ```
 
 ## Installation
@@ -182,7 +177,7 @@ snip manage
 | [`snip ls`](#snip-ls)           | `nothing -> table<name: string, content: string, path: string>` | List every snippet: what it is called, what is in it, and where it lives.                             |
 | [`snip manage`](#snip-manage)   | `any -> any`                                                    | Open the snip directory in the configured editor, then track the changes if auto tracking is enabled. |
 | [`snip text`](#snip-text)       | `nothing -> string`                                             | Print a snippet's content to stdout.                                                                  |
-| [`snip track`](#snip-track)     | `nothing -> nothing`                                            | Record whatever changed in the snip directory with the configured tracker.                            |
+| [`snip track`](#snip-track)     | `nothing -> nothing`                                            | Record whatever changed in the snip directory with git.                                               |
 
 ### `snip edit`
 
@@ -234,13 +229,7 @@ Print a snippet's content to stdout.
 
 ### `snip track`
 
-Record whatever changed in the snip directory with the configured tracker.
+Record whatever changed in the snip directory with git.
 
 **Signature:** `nothing -> nothing`
-
-**Parameters**
-
-| Parameter  | Type     | Description                                        |
-| ---------- | -------- | -------------------------------------------------- |
-| `tracker?` | `string` | tracker to use, defaulting to the configured one   |
 <!-- commands-section:end -->

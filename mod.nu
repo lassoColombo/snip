@@ -39,31 +39,9 @@ def snips [] {
   }
 }
 
-# A tracker is a closure that records the snip directory under `message`.
-def trackers [] {
-  {
-    git: {|message|
-      let toplevel = ^git -C (snipdir) rev-parse --show-toplevel | complete
-      if $toplevel.exit_code != 0 { error make --unspanned "not in a repository" }
-      let root = $toplevel.stdout | str trim
-
-      if (^git -C $root status --porcelain -- (snipdir) | is-empty) { return }
-      ^git -C $root add -- (snipdir)
-      ^git -C $root commit --only --quiet --message $message -- (snipdir)
-    }
-    jj: {|message|
-      cd (snipdir)
-      if (^jj root | complete).exit_code != 0 { error make --unspanned "not in a repository" }
-
-      if (^jj diff --summary . | is-empty) { return }
-      ^jj commit --quiet --message $message .
-    }
-  }
-}
-
 # Track the snip directory, but only if asked to.
 def auto-track [] {
-  if ($env.snip_config?.auto_track? | is-empty) { return }
+  if not ($env.snip_config?.auto_track? | default false) { return }
   track
 }
 
@@ -101,18 +79,16 @@ export def text [
   (choose $snip).content
 }
 
-def tracker-completer [] { trackers | columns }
+# Record whatever changed in the snip directory with git.
+export def track []: nothing -> nothing {
+  let toplevel = ^git -C (snipdir) rev-parse --show-toplevel | complete
+  if $toplevel.exit_code != 0 { error make --unspanned "not in a repository" }
+  let root = $toplevel.stdout | str trim
 
-# Record whatever changed in the snip directory with the configured tracker.
-export def track [
-  tracker?: string@tracker-completer  # tracker to use, defaulting to the configured one
-]: nothing -> nothing {
-  let trackers = (trackers)
-  let tracker = $tracker | default ($env.snip_config?.auto_track?.tracker? | default "git")
-  if ($tracker not-in ($trackers | columns)) {
-    error make --unspanned $"($tracker) is not a supported tracker"
-  }
-  do ($trackers | get $tracker) ($env.snip_config?.auto_track?.message? | default "update snippets")
+  if (^git -C $root status --porcelain -- (snipdir) | is-empty) { return }
+  let message = $env.snip_config?.commit_message? | default "update snippets"
+  ^git -C $root add -- (snipdir)
+  ^git -C $root commit --only --quiet --message $message -- (snipdir)
 }
 
 # Open a snippet in the configured editor, then track the change if auto tracking is enabled.
