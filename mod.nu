@@ -75,7 +75,7 @@ def track [] {
 def pick [] {
   let items = $in
   let custom = $env.snip_config?.picker?
-  if ($custom | is-empty) { 
+  if ($custom | is-not-empty) { 
     $items | do $custom
   } else {
     $items | input list --fuzzy --display {|| $in.name } "snippet"

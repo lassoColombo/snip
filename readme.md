@@ -21,6 +21,7 @@ Snip is a little and powerful snippet manager in less than 100 lines of nu.
     - [`snip ls`](#`snip-ls`)
     - [`snip manage`](#`snip-manage`)
     - [`snip text`](#`snip-text`)
+    - [`snip track`](#`snip-track`)
 
 
 
@@ -126,6 +127,13 @@ $env.snip_config = { auto_track: { tracker: git } }
 $env.snip_config = { auto_track: { tracker: jj } }
 ```
 
+Or keep it in your hands. `snip track` records the snip directory on demand, with or without auto tracking configured:
+
+```nu
+snip track     # the configured tracker, git if you configured none
+snip track jj  # this one, this time
+```
+
 Snip finds the repository by walking up from the snip directory, so snippets kept inside your dotfiles need no setup at all.
 
 It commits the snip directory and nothing else.
@@ -169,6 +177,7 @@ snip manage
 | [`snip ls`](#snip-ls)           | `nothing -> table<name: string, content: string, path: string>` | List every snippet: what it is called, what is in it, and where it lives.                             |
 | [`snip manage`](#snip-manage)   | `any -> any`                                                    | Open the snip directory in the configured editor, then track the changes if auto tracking is enabled. |
 | [`snip text`](#snip-text)       | `nothing -> string`                                             | Print a snippet's content to stdout.                                                                  |
+| [`snip track`](#snip-track)     | `nothing -> nothing`                                            | Record whatever changed in the snip directory with the configured tracker.                            |
 
 ### `snip edit`
 
@@ -217,4 +226,16 @@ Print a snippet's content to stdout.
 | Parameter | Type     | Description                                    |
 | --------- | -------- | ---------------------------------------------- |
 | `snip?`   | `string` | snippet name (regex against the relative path) |
+
+### `snip track`
+
+Record whatever changed in the snip directory with the configured tracker.
+
+**Signature:** `nothing -> nothing`
+
+**Parameters**
+
+| Parameter  | Type     | Description                                        |
+| ---------- | -------- | -------------------------------------------------- |
+| `tracker?` | `string` | tracker to use, defaulting to the configured one   |
 <!-- commands-section:end -->
