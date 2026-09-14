@@ -1,12 +1,19 @@
 # Snip
 
-Snip is a little and powerful snippet manager in less than 100 lines of nu.
+
+<div align="center">
+  <h1>snip</h1>
+  <p><strong>Little and powerful snippet manager</strong></p>
+  <a href="https://asciinema.org/a/JFWJVaytpLcbtjZC"><img src="https://asciinema.org/a/JFWJVaytpLcbtjZC.svg" alt="asciicast" width="600"></a>
+</div>
 
 - Manage your snippets with your preferred editor  
 - Select them with your picker of choice  
 - Track them with git or jj as part of your configuration  
 
 ---
+
+- [Snip](#snip)
   - [What snip is](#what-snip-is)
     - [Manage your snippets in your preferred editor](#manage-your-snippets-in-your-preferred-editor)
       - [Configure the editor](#configure-the-editor)
@@ -23,11 +30,9 @@ Snip is a little and powerful snippet manager in less than 100 lines of nu.
     - [`snip text`](#`snip-text`)
     - [`snip track`](#`snip-track`)
 
-
-
 ## What snip is
 
-Snip is a little but powerful snippet manager.  
+Snip is a little and powerful snippet manager.  
 
 Snip stores your snippets as regular files.  
 It lets you easily track them with git and manage them with your editor of choice.
