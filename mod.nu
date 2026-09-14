@@ -61,15 +61,10 @@ def trackers [] {
   }
 }
 
-# Track whatever changed in the snip directory, if asked to.
-def track [] {
+# Track the snip directory, but only if asked to.
+def auto-track [] {
   if ($env.snip_config?.auto_track? | is-empty) { return }
-  let trackers = (trackers)
-  let tracker = $env.snip_config.auto_track.tracker? | default "git"
-  if ($tracker not-in ($trackers | columns)) {
-    error make --unspanned $"($tracker) is not a supported tracker"
-  }
-  do ($trackers | get $tracker) ($env.snip_config.auto_track.message? | default "update snippets")
+  track
 }
 
 def pick [] {
@@ -106,18 +101,32 @@ export def text [
   (choose $snip).content
 }
 
+def tracker-completer [] { trackers | columns }
+
+# Record whatever changed in the snip directory with the configured tracker.
+export def track [
+  tracker?: string@tracker-completer  # tracker to use, defaulting to the configured one
+]: nothing -> nothing {
+  let trackers = (trackers)
+  let tracker = $tracker | default ($env.snip_config?.auto_track?.tracker? | default "git")
+  if ($tracker not-in ($trackers | columns)) {
+    error make --unspanned $"($tracker) is not a supported tracker"
+  }
+  do ($trackers | get $tracker) ($env.snip_config?.auto_track?.message? | default "update snippets")
+}
+
 # Open a snippet in the configured editor, then track the change if auto tracking is enabled.
 export def edit [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ] {
   editor (choose $snip).path
-  track
+  auto-track
 }
 
 # Open the snip directory in the configured editor, then track the changes if auto tracking is enabled.
 export def manage [] {
   editor (snipdir)
-  track
+  auto-track
 }
 
 # List every snippet: what it is called, what is in it, and where it lives.
