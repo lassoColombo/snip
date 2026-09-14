@@ -1,3 +1,5 @@
+const palette = [cyan green yellow magenta blue purple]
+
 def basedir [] {
   if ($env.SNIP_SNIPDIR? | is-not-empty) {
     $env.SNIP_SNIPDIR
@@ -9,6 +11,45 @@ def basedir [] {
 }
 
 def snipdir [] { [(basedir) snippets] | path join }
+
+def snips [] {
+  let root = (snipdir)
+  glob --no-dir $"($root)/**/*" | each {|file|
+    {
+      name: ($file | path relative-to $root)
+      content: (open -r $file)
+      path: $file
+    }
+  }
+}
+
+def snip-completer [] {
+  def headline [content: any]: nothing -> string {
+    if ($content | describe) != string {return ""}
+    let first = ($content | lines | get 0? | default "")
+    if ($first | str starts-with "#") {$first | str replace -r '^#+\s*' ''} else {""}
+  }
+
+  def styled [snip: record] {
+    let custom = $env.snip_config?.style?
+    if ($custom | is-not-empty) {return ($snip | do $custom)}
+    let group = ($snip.name | path dirname)
+    $palette | get (($group | hash md5 | str substring 0..2 | into int --radix 16) mod ($palette | length))
+  }
+
+  {
+    completions: (snips | each {|snip| {
+      value: $snip.name
+      description: (headline $snip.content)
+      style: (styled $snip)
+    }})
+    options: {
+      completion_algorithm: "fuzzy"  # similar as `=~` in `choose`
+      match_description: true
+      sort: false
+    }
+  }
+}
 
 # Open `target` with the configured editor.
 def editor [target: string] {
@@ -26,17 +67,6 @@ def editor [target: string] {
   } | append $target
 
   ^($argv | first) ...($argv | skip 1)
-}
-
-def snips [] {
-  let root = (snipdir)
-  glob --no-dir $"($root)/**/*" | each {|file|
-    {
-      name: ($file | path relative-to $root)
-      content: (open -r $file)
-      path: $file
-    }
-  }
 }
 
 # Track the snip directory, but only if asked to.
@@ -58,12 +88,13 @@ def pick [] {
 
 def choose [snip?] {
   if ($snip | is-empty) {return (snips | pick)} 
-  let matches = (snips | where name =~ $snip)
+  let all = snips
+  let exact = ($all | where name == $snip)
+  if ($exact | is-not-empty) {return $exact.0}
+  let matches = ($all | where name =~ $snip)
   if ($matches | length) == 1 {return $matches.0}
   $matches | pick
 }
-
-def snip-completer [] { snips | get name }
 
 # Insert a snippet's content into the current commandline.
 export def execute [

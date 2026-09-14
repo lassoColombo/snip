@@ -14,6 +14,8 @@
     - [Manage your snippets in your preferred editor](#manage-your-snippets-in-your-preferred-editor)
       - [Configure the editor](#configure-the-editor)
     - [Access your snippets with an ergonomic cli](#access-your-snippets-with-an-ergonomic-cli)
+      - [Autocompletion](#autocompletion)
+      - [Configure the colours](#configure-the-colours)
       - [Configure the picker](#configure-the-picker)
     - [Track your snippets with git](#track-your-snippets-with-git)
       - [Configure the message](#configure-the-message)
@@ -28,13 +30,13 @@
 
 ## What snip is
 
-Snip is a little and powerful snippet manager.  
+Snip is a powerful snippet manager in a file.
 
-> Snip stores your snippets as regular files.  
+> It stores your snippets as regular files.  
  It lets you easily track them with git and manage them with your editor of choice.
 
-> Snip let you access your snippets with an ergonomic cli.  
- You can run your snippets with autocompletion or by selecting them in your favourite picker.
+> It let you access your snippets with an ergonomic cli and your favourite picker.
+ You can run your snippets with first-class autocompletion or by selecting them in your favourite picker.
 
 ---
 
@@ -80,6 +82,47 @@ snip execute
 # If your search matches more than a snippet, you will be prompted to select one in the picker
 snip execute ls
 ```
+
+#### Autocompletion
+
+Autocompletion reaches exactly as far as the cli does.
+`snip execute ls` matches `ls` anywhere in the name, so Tab offers you the very snippets the command would have found - `nu/ls.nu` and `connection-string/convert-mole-config-to-sqls.nu` alike.
+
+It reads your snippets, too.
+The leading comment of a snippet becomes its description, and what you type is matched against descriptions as well as names.
+A snippet headed `# Render a LaTeX document` answers to `latex` even when its name never says so.
+
+Descriptions need a menu with room for them.
+Nushell's default Tab menu is columnar and shows names alone; the ide menu shows the description beside them, on `Ctrl+Space` out of the box.
+Put it on Tab if that is where you want it:
+
+```nu
+$env.config.keybindings ++= [{
+  name: ide_completion_menu_on_tab
+  modifier: none
+  keycode: tab
+  mode: [emacs vi_normal vi_insert]
+  event: {until: [{send: menu name: ide_completion_menu} {send: menunext} {edit: complete}]}
+}]
+```
+
+Snippets wear the colour of the directory they live in, so a long menu still reads as groups.
+Names that need quoting get it, so a snippet called `my snippet.nu` completes into something the parser accepts.
+
+Completion never blocks your prompt: it is a plain lookup that Nushell runs in the background, and the picker stays where it belongs - on a missing or ambiguous argument.
+
+#### Configure the colours
+
+Set `$env.snip_config.style` to choose the colours yourself.
+A style is a closure from a snippet to a colour name, or to a record of `fg`, `bg` and `attr`:
+
+```nu
+$env.snip_config = {style: {|| 
+  if ($in.name | str starts-with "git/") { "red" } else { {fg: green attr: b} }
+}}
+```
+
+The snippet it receives is the same record `snip ls` returns, so you can colour by name, by path, or by what is inside.
 
 #### Configure the picker
 
