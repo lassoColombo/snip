@@ -1,10 +1,10 @@
 # Snip
 
-Snip is a little but powerful snippet manager in less than 100 lines of nu.
+Snip is a little and powerful snippet manager in less than 100 lines of nu.
 
 - Manage your snippets with your preferred editor  
 - Select them with your picker of choice  
-- Track them with git as part of your configuration  
+- Track them with git or jj as part of your configuration  
 
 ---
   - [What snip is](#what-snip-is)
@@ -12,6 +12,8 @@ Snip is a little but powerful snippet manager in less than 100 lines of nu.
       - [Configure the editor](#configure-the-editor)
     - [Access your snippets with an ergonomic cli](#access-your-snippets-with-an-ergonomic-cli)
       - [Configure the picker](#configure-the-picker)
+    - [Track your snippets with git or jj](#track-your-snippets-with-git-or-jj)
+      - [Configure the message](#configure-the-message)
   - [Installation](#installation)
   - [Commands](#commands)
     - [`snip edit`](#`snip-edit`)
@@ -47,13 +49,12 @@ The snip directory follows the xdg directory specification: you can override it 
 
 #### Configure the editor
 
-Snip uses by default the editor you configured in `$env.config.buffer_editor` or `$env.EDITOR`, falling back to `vim`.  
+Snip uses by default the editor you configured in `$env.config.buffer_editor` or `$env.EDITOR`.  
 If you'd rather use another editor to manage your snippets you can set `$env.snip_config.editor` as follows:
 ```nu
 $env.snip_config = { editor: nvim }
-$env.snip_config = { editor: ["emacsclient", "-s", "light", "-t"] } 
+$env.snip_config = { editor: ["emacsclient", "-s", "light", "-t"] } # the snippet (or the snip directory) is appended last.
 ```
-A bare string is just the program; a list is the program followed by its arguments - the snippet (or the snip directory) is appended last.
 
 ---
 
@@ -111,6 +112,40 @@ $env.snip_config = {picker: {||
 }}
 ```
 
+---
+
+### Track your snippets with git or jj
+
+Editing a snippet is a change worth keeping.
+Snip keeps it for you: when your editor exits, `snip edit` and `snip manage` commit whatever changed - one commit per invocation.
+
+Nothing happens until you name a tracker:
+
+```nu
+$env.snip_config = { auto_track: { tracker: git } }
+$env.snip_config = { auto_track: { tracker: jj } }
+```
+
+Snip finds the repository by walking up from the snip directory, so snippets kept inside your dotfiles need no setup at all.
+
+It commits the snip directory and nothing else.
+With `git` it stages and commits those paths alone, with `jj` it commits the changes to those paths and leaves the rest in your working copy.
+Whatever else you had in flight stays where you left it.
+
+It stays quiet when there is nothing to do: no change, no commit.
+It speaks up when it cannot do its job: if the snip directory is not in a repository you hear about it, because you asked for tracking.
+
+One requirement: your editor must block until you are done, exactly as `git commit` requires of `$env.EDITOR`.
+An editor that returns immediately is committed before you have typed anything - `code --wait`, not `code`.
+
+#### Configure the message
+
+Commits are called `update snippets`. Set `$env.snip_config.auto_track.message` to call them something else:
+
+```nu
+$env.snip_config = { auto_track: { tracker: jj, message: "chore(snippets): update" } }
+```
+
 ## Installation
 
 ```nu
@@ -127,17 +162,17 @@ snip manage
 <!-- commands-section:start -->
 ## Commands
 
-| Command                         | Signature           | Description                                              |
-| ------------------------------- | ------------------- | -------------------------------------------------------- |
-| [`snip edit`](#snip-edit)       | `any -> any`        | Open a snippet in the configured editor.                 |
-| [`snip execute`](#snip-execute) | `any -> any`        | Insert a snippet's content into the current commandline. |
-| [`snip ls`](#snip-ls)           | `nothing -> table`  | List every snippet: name, content and path.              |
-| [`snip manage`](#snip-manage)   | `any -> any`        | Open the snip directory in the configured editor.        |
-| [`snip text`](#snip-text)       | `nothing -> string` | Print a snippet's content to stdout.                     |
+| Command                         | Signature                                                       | Description                                                                                           |
+| ------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`snip edit`](#snip-edit)       | `any -> any`                                                    | Open a snippet in the configured editor, then track the change if auto tracking is enabled.           |
+| [`snip execute`](#snip-execute) | `any -> any`                                                    | Insert a snippet's content into the current commandline.                                              |
+| [`snip ls`](#snip-ls)           | `nothing -> table<name: string, content: string, path: string>` | List every snippet: what it is called, what is in it, and where it lives.                             |
+| [`snip manage`](#snip-manage)   | `any -> any`                                                    | Open the snip directory in the configured editor, then track the changes if auto tracking is enabled. |
+| [`snip text`](#snip-text)       | `nothing -> string`                                             | Print a snippet's content to stdout.                                                                  |
 
 ### `snip edit`
 
-Open a snippet in the configured editor.
+Open a snippet in the configured editor, then track the change if auto tracking is enabled.
 
 **Signature:** `any -> any`
 
@@ -146,18 +181,6 @@ Open a snippet in the configured editor.
 | Parameter | Type     | Description                                    |
 | --------- | -------- | ---------------------------------------------- |
 | `snip?`   | `string` | snippet name (regex against the relative path) |
-
-**Search terms:** `snippet`, `edit`, `open`
-
-**Examples**
-
-```nu
-# edit a specific snippet
-snip edit aws/s3-list
-
-# fuzzy-pick, then edit
-snip edit
-```
 
 ### `snip execute`
 
@@ -171,63 +194,17 @@ Insert a snippet's content into the current commandline.
 | --------- | -------- | ---------------------------------------------- |
 | `snip?`   | `string` | snippet name (regex against the relative path) |
 
-**Search terms:** `snippet`, `paste`, `commandline`, `fuzzy`
-
-**Examples**
-
-```nu
-# fuzzy-pick a snippet and paste it
-snip
-
-# match by path fragment
-snip aws/s3-list
-
-# match anywhere in the relative path
-snip jwt
-```
-
 ### `snip ls`
 
 List every snippet: what it is called, what is in it, and where it lives.
 
 **Signature:** `nothing -> table<name: string, content: string, path: string>`
 
-No flags, and all three columns always - this is exactly what a picker is handed
-(see [Picker](#picker)), so a picker can be built against `snip ls` at the
-prompt. Select what you want when you want less.
-
-**Search terms:** `snippet`, `list`, `ls`, `table`
-
-**Examples**
-
-```nu
-# every snippet, in full
-snip ls
-
-# just the names
-snip ls | get name
-
-# filter by path fragment
-snip ls | where name =~ aws
-
-# run your configured picker by hand
-snip ls | do $env.snip_config.picker
-```
-
 ### `snip manage`
 
-Open the snip directory in the configured editor.
+Open the snip directory in the configured editor, then track the changes if auto tracking is enabled.
 
 **Signature:** `any -> any`
-
-**Search terms:** `snippet`, `directory`, `manage`, `browse`
-
-**Examples**
-
-```nu
-# open the snip dir for bulk edits
-snip manage
-```
 
 ### `snip text`
 
@@ -240,19 +217,4 @@ Print a snippet's content to stdout.
 | Parameter | Type     | Description                                    |
 | --------- | -------- | ---------------------------------------------- |
 | `snip?`   | `string` | snippet name (regex against the relative path) |
-
-**Search terms:** `snippet`, `print`, `show`, `cat`
-
-**Examples**
-
-```nu
-# print to stdout
-snip text decode-jwt
-
-# fuzzy-pick, then print
-snip text
-
-# pipe into another command
-snip text aws/s3-list | clip copy
-```
 <!-- commands-section:end -->

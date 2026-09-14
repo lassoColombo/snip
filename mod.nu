@@ -39,21 +39,55 @@ def snips [] {
   }
 }
 
-def pick []: list<any> -> any {
-  let items = $in
-  let custom = $env.snip_config?.picker?
-  if ($custom != null) { return ($items | do $custom) }
-  $items | input list --fuzzy --display {|| $in.name } "snippet"
+# A tracker is a closure that records the snip directory under `message`.
+def trackers [] {
+  {
+    git: {|message|
+      let toplevel = ^git -C (snipdir) rev-parse --show-toplevel | complete
+      if $toplevel.exit_code != 0 { error make --unspanned "not in a repository" }
+      let root = $toplevel.stdout | str trim
+
+      if (^git -C $root status --porcelain -- (snipdir) | is-empty) { return }
+      ^git -C $root add -- (snipdir)
+      ^git -C $root commit --only --quiet --message $message -- (snipdir)
+    }
+    jj: {|message|
+      cd (snipdir)
+      if (^jj root | complete).exit_code != 0 { error make --unspanned "not in a repository" }
+
+      if (^jj diff --summary . | is-empty) { return }
+      ^jj commit --quiet --message $message .
+    }
+  }
 }
 
-def fuzzyfind [] { $in | pick | default { path: "" content: "" } }
+# Track whatever changed in the snip directory, if asked to.
+def track [] {
+  if ($env.snip_config?.auto_track? | is-empty) { return }
+  let trackers = (trackers)
+  let tracker = $env.snip_config.auto_track.tracker? | default "git"
+  if ($tracker not-in ($trackers | columns)) {
+    error make --unspanned $"($tracker) is not a supported tracker"
+  }
+  do ($trackers | get $tracker) ($env.snip_config.auto_track.message? | default "update snippets")
+}
 
+def pick [] {
+  let items = $in
+  let custom = $env.snip_config?.picker?
+  if ($custom | is-empty) { 
+    $items | do $custom
+  } else {
+    $items | input list --fuzzy --display {|| $in.name } "snippet"
+  }
+  | default { path: "" content: "" } 
+}
 
 def choose [snip?] {
-  if ($snip | is-empty) {return (snips | fuzzyfind)} 
+  if ($snip | is-empty) {return (snips | pick)} 
   let matches = (snips | where name =~ $snip)
   if ($matches | length) == 1 {return $matches.0}
-  $matches | fuzzyfind
+  $matches | pick
 }
 
 def snip-completer [] { snips | get name }
@@ -72,15 +106,19 @@ export def text [
   (choose $snip).content
 }
 
-# Open a snippet in the configured editor.
+# Open a snippet in the configured editor, then track the change if auto tracking is enabled.
 export def edit [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ] {
   editor (choose $snip).path
+  track
 }
 
-# Open the snip directory in the configured editor.
-export def manage [] { editor (snipdir) }
+# Open the snip directory in the configured editor, then track the changes if auto tracking is enabled.
+export def manage [] {
+  editor (snipdir)
+  track
+}
 
 # List every snippet: what it is called, what is in it, and where it lives.
 export def ls []: nothing -> table<name: string, content: string, path: string> { snips }
