@@ -1,4 +1,7 @@
-const palette = [cyan green yellow magenta blue purple]
+const palette = [
+  cyan green yellow magenta blue red
+  light_cyan light_green light_yellow light_magenta light_blue light_red
+]
 
 def basedir [] {
   if ($env.SNIP_SNIPDIR? | is-not-empty) {

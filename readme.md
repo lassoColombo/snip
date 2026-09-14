@@ -9,26 +9,25 @@
   <a href="https://asciinema.org/a/JFWJVaytpLcbtjZC"><img src="https://asciinema.org/a/JFWJVaytpLcbtjZC.svg" alt="asciicast" width="600"></a>
 </div>
 
-- [Snip](#snip)
-  - [What snip is](#what-snip-is)
-    - [Manage your snippets in your preferred editor](#manage-your-snippets-in-your-preferred-editor)
-      - [Configure the editor](#configure-the-editor)
-    - [Access your snippets with an ergonomic cli](#access-your-snippets-with-an-ergonomic-cli)
-      - [Autocompletion](#autocompletion)
-      - [Configure the colours](#configure-the-colours)
-      - [Configure the picker](#configure-the-picker)
-    - [Track your snippets with git](#track-your-snippets-with-git)
-      - [Configure the message](#configure-the-message)
-  - [Installation](#installation)
-  - [Commands](#commands)
-    - [`snip edit`](#`snip-edit`)
-    - [`snip execute`](#`snip-execute`)
-    - [`snip ls`](#`snip-ls`)
-    - [`snip manage`](#`snip-manage`)
-    - [`snip text`](#`snip-text`)
-    - [`snip track`](#`snip-track`)
+- [What snip is](#what-snip-is)
+  - [Manage your snippets in your preferred editor](#manage-your-snippets-in-your-preferred-editor)
+    - [Configure the editor](#configure-the-editor)
+  - [Access your snippets with an ergonomic cli](#access-your-snippets-with-an-ergonomic-cli)
+    - [Autocompletion](#autocompletion)
+    - [Configure the colours](#configure-the-colours)
+    - [Configure the picker](#configure-the-picker)
+  - [Track your snippets with git](#track-your-snippets-with-git)
+    - [Configure the message](#configure-the-message)
+- [Installation](#installation)
+- [Commands](#commands)
+  - [`snip edit`](#`snip-edit`)
+  - [`snip execute`](#`snip-execute`)
+  - [`snip ls`](#`snip-ls`)
+  - [`snip manage`](#`snip-manage`)
+  - [`snip text`](#`snip-text`)
+  - [`snip track`](#`snip-track`)
 
-## What snip is
+# What snip is
 
 Snip is a powerful snippet manager in a file.
 
@@ -38,9 +37,7 @@ Snip is a powerful snippet manager in a file.
 > It let you access your snippets with an ergonomic cli and your favourite picker.
  You can run your snippets with first-class autocompletion or by selecting them in your favourite picker.
 
----
-
-### Manage your snippets in your preferred editor
+## Manage your snippets in your preferred editor
 Snip stores your snippets as regular files on disk, and lets you manage them with your default editor - or any editor of your choice.  
 Snippets live by default under `~/.config/snip`. Everything under that directory is a snippet.  
 The organization of the snip directory is free: you can group and organize your snippets as you please.
@@ -53,7 +50,7 @@ snip ls # list your snippets
 
 The snip directory follows the xdg directory specification: you can override it by either setting `XDG_CONFIG_HOME` or `SNIP_SNIPDIR`.  
 
-#### Configure the editor
+### Configure the editor
 
 Snip uses by default the editor you configured in `$env.config.buffer_editor` or `$env.EDITOR`.  
 If you'd rather use another editor to manage your snippets you can set `$env.snip_config.editor` as follows:
@@ -62,9 +59,7 @@ $env.snip_config = { editor: nvim }
 $env.snip_config = { editor: ["emacsclient", "-s", "light", "-t"] } # the snippet (or the snip directory) is appended last.
 ```
 
----
-
-### Access your snippets with an ergonomic cli
+## Access your snippets with an ergonomic cli
 Snip exposes an ergonomic cli that lets you quickly find a snippet.
 The cli is based on the following principles:
 - all arguments must provide autocompletion
@@ -83,7 +78,7 @@ snip execute
 snip execute ls
 ```
 
-#### Autocompletion
+### Autocompletion
 
 Autocompletion reaches exactly as far as the cli does.
 `snip execute ls` matches `ls` anywhere in the name, so Tab offers you the very snippets the command would have found - `nu/ls.nu` and `connection-string/convert-mole-config-to-sqls.nu` alike.
@@ -111,7 +106,7 @@ Names that need quoting get it, so a snippet called `my snippet.nu` completes in
 
 Completion never blocks your prompt: it is a plain lookup that Nushell runs in the background, and the picker stays where it belongs - on a missing or ambiguous argument.
 
-#### Configure the colours
+### Configure the colours
 
 Set `$env.snip_config.style` to choose the colours yourself.
 A style is a closure from a snippet to a colour name, or to a record of `fg`, `bg` and `attr`:
@@ -124,7 +119,7 @@ $env.snip_config = {style: {||
 
 The snippet it receives is the same record `snip ls` returns, so you can colour by name, by path, or by what is inside.
 
-#### Configure the picker
+### Configure the picker
 
 Choosing a snippet uses Nushell's built-in `input list` by default.  
 Set `$env.snip_config.picker` to swap the engine.
@@ -159,9 +154,7 @@ $env.snip_config = {picker: {||
 }}
 ```
 
----
-
-### Track your snippets with git
+## Track your snippets with git
 
 Editing a snippet is a change worth keeping.
 Snip keeps it for you: when your editor exits, `snip edit` and `snip manage` commit whatever changed - one commit per invocation.
@@ -189,7 +182,7 @@ It speaks up when it cannot do its job: if the snip directory is not in a reposi
 One requirement: your editor must block until you are done, exactly as `git commit` requires of `$env.EDITOR`.
 An editor that returns immediately is committed before you have typed anything - `code --wait`, not `code`.
 
-#### Configure the message
+### Configure the message
 
 Commits are called `update snippets`. Set `$env.snip_config.commit_message` to call them something else:
 
@@ -197,7 +190,7 @@ Commits are called `update snippets`. Set `$env.snip_config.commit_message` to c
 $env.snip_config = { commit_message: "chore(snippets): update" }
 ```
 
-## Installation
+# Installation
 
 ```nu
 # clone into one of your NU_LIB_DIRS
@@ -211,7 +204,7 @@ snip manage
 ```
 
 <!-- commands-section:start -->
-## Commands
+# Commands
 
 | Command                         | Signature                                                       | Description                                                                                           |
 | ------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -222,7 +215,7 @@ snip manage
 | [`snip text`](#snip-text)       | `nothing -> string`                                             | Print a snippet's content to stdout.                                                                  |
 | [`snip track`](#snip-track)     | `nothing -> nothing`                                            | Record whatever changed in the snip directory with git.                                               |
 
-### `snip edit`
+## `snip edit`
 
 Open a snippet in the configured editor, then track the change if auto tracking is enabled.
 
@@ -234,7 +227,7 @@ Open a snippet in the configured editor, then track the change if auto tracking 
 | --------- | -------- | ---------------------------------------------- |
 | `snip?`   | `string` | snippet name (regex against the relative path) |
 
-### `snip execute`
+## `snip execute`
 
 Insert a snippet's content into the current commandline.
 
@@ -246,19 +239,19 @@ Insert a snippet's content into the current commandline.
 | --------- | -------- | ---------------------------------------------- |
 | `snip?`   | `string` | snippet name (regex against the relative path) |
 
-### `snip ls`
+## `snip ls`
 
 List every snippet: what it is called, what is in it, and where it lives.
 
 **Signature:** `nothing -> table<name: string, content: string, path: string>`
 
-### `snip manage`
+## `snip manage`
 
 Open the snip directory in the configured editor, then track the changes if auto tracking is enabled.
 
 **Signature:** `any -> any`
 
-### `snip text`
+## `snip text`
 
 Print a snippet's content to stdout.
 
@@ -270,7 +263,7 @@ Print a snippet's content to stdout.
 | --------- | -------- | ---------------------------------------------- |
 | `snip?`   | `string` | snippet name (regex against the relative path) |
 
-### `snip track`
+## `snip track`
 
 Record whatever changed in the snip directory with git.
 
