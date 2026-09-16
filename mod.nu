@@ -1,6 +1,8 @@
 const palette = [
   cyan green yellow magenta blue red
   light_cyan light_green light_yellow light_magenta light_blue light_red
+  cyan_bold green_bold yellow_bold magenta_bold blue_bold red_bold
+  cyan_dimmed green_dimmed yellow_dimmed magenta_dimmed blue_dimmed red_dimmed
 ]
 
 def basedir [] {
@@ -54,7 +56,6 @@ def snip-completer [] {
   }
 }
 
-# Open `target` with the configured editor.
 def editor [target: string] {
   let configured = [
     $env.snip_config?.editor?
@@ -72,7 +73,6 @@ def editor [target: string] {
   ^($argv | first) ...($argv | skip 1)
 }
 
-# Track the snip directory, but only if asked to.
 def auto-track [] {
   if not ($env.snip_config?.auto_track? | default false) { return }
   track
@@ -111,18 +111,6 @@ export def text [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
 ]: nothing -> string {
   (choose $snip).content
-}
-
-# Record whatever changed in the snip directory with git.
-export def track []: nothing -> nothing {
-  let toplevel = ^git -C (snipdir) rev-parse --show-toplevel | complete
-  if $toplevel.exit_code != 0 { error make --unspanned "not in a repository" }
-  let root = $toplevel.stdout | str trim
-
-  if (^git -C $root status --porcelain -- (snipdir) | is-empty) { return }
-  let message = $env.snip_config?.commit_message? | default "update snippets"
-  ^git -C $root add -- (snipdir)
-  ^git -C $root commit --only --quiet --message $message -- (snipdir)
 }
 
 # Open a snippet in the configured editor, then track the change if auto tracking is enabled.
