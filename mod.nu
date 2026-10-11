@@ -113,6 +113,18 @@ export def text [
   (choose $snip).content
 }
 
+# Record whatever changed in the snip directory with git.
+export def track []: nothing -> nothing {
+  let toplevel = ^git -C (snipdir) rev-parse --show-toplevel | complete
+  if $toplevel.exit_code != 0 { error make --unspanned "not in a repository" }
+  let root = $toplevel.stdout | str trim
+
+  if (^git -C $root status --porcelain -- (snipdir) | is-empty) { return }
+  let message = $env.snip_config?.commit_message? | default "update snippets"
+  ^git -C $root add -- (snipdir)
+  ^git -C $root commit --only --quiet --message $message -- (snipdir)
+}
+
 # Open a snippet in the configured editor, then track the change if auto tracking is enabled.
 export def edit [
   snip?: string@snip-completer  # snippet name (regex against the relative path)
