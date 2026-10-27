@@ -81,7 +81,7 @@ snip execute ls
 ### Autocompletion
 
 Autocompletion reaches exactly as far as the cli does.
-`snip execute ls` matches `ls` anywhere in the name, so Tab offers you the very snippets the command would have found - `nu/ls.nu` and `connection-string/convert-mole-config-to-sqls.nu` alike.
+`snip execute ls` matches `ls` anywhere in the name, so Tab offers you the very snippets the command would have found - `nu/ls.nu` and any other snippet with `ls` somewhere in its path alike.
 
 It reads your snippets, too.
 The leading comment of a snippet becomes its description, and what you type is matched against descriptions as well as names.
